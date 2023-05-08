@@ -28,7 +28,19 @@ route.post("/", async (req, res) => {
 // !List
 route.get("/", async (req, res) => {
   try {
-    const allTweet = await prisma.tweet.findMany();
+    const allTweet = await prisma.tweet.findMany({
+      // include:{user:true},
+      select: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            username: true,
+            image: true,
+          },
+        },
+      },
+    });
     res.json(allTweet);
   } catch (error) {
     res.status(400).json({ error: "Something went wrong" });
@@ -54,24 +66,18 @@ route.get("/:id", async (req, res) => {
 // !Update
 
 route.put("/:id", (req, res) => {
-
-  const {id} = req.params;
-  res.sendStatus(501).json({error:`Not Implemented: ${id}`})
-
-
-
+  const { id } = req.params;
+  res.sendStatus(501).json({ error: `Not Implemented: ${id}` });
 });
 
 // !Delete
 
-route.delete("/:id", async(req, res) => {
+route.delete("/:id", async (req, res) => {
   try {
     const { id } = req.params;
     await prisma.tweet.delete({ where: { id: Number(id) } });
     res.sendStatus(202).json({ message: "Tweet Deleted" });
-
   } catch (error) {
-
     res.sendStatus(400).json({ error: `Failed to Delete Tweet` });
   }
 });
