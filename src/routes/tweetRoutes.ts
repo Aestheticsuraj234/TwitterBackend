@@ -1,85 +1,77 @@
-import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
+import { Router } from 'express';
+import { PrismaClient } from '@prisma/client';
 
+const router = Router();
 const prisma = new PrismaClient();
 
-const route = Router();
+// Tweet CRUD
 
-//  Curd Operation
+// Create Tweet
+router.post('/', async (req, res) => {
+  const { content, image } = req.body;
+  // @ts-ignore
+  const user = req.user;
 
-// !Create
-route.post("/", async (req, res) => {
-  const { content, image, userId } = req.body;
   try {
     const result = await prisma.tweet.create({
       data: {
         content,
         image,
-        userId, //todo mange on the basis of user auth
+        userId: user.id,
       },
+      include: { user: true },
     });
+
     res.json(result);
-  } catch (error) {
-    console.error("error:", error);
-    res.status(400).json({ error: "Username & email is must be unique" });
+  } catch (e) {
+    res.status(400).json({ error: 'Username and email should be unique' });
   }
 });
 
-// !List
-route.get("/", async (req, res) => {
-  try {
-    const allTweet = await prisma.tweet.findMany({
-      // include:{user:true},
-      select: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            username: true,
-            image: true,
-          },
+// list Tweet
+router.get('/', async (req, res) => {
+  const allTweets = await prisma.tweet.findMany({
+    include: {
+      user: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+          image: true,
         },
       },
-    });
-    res.json(allTweet);
-  } catch (error) {
-    res.status(400).json({ error: "Something went wrong" });
-  }
+    },
+  });
+  res.json(allTweets);
 });
 
-// !get One
-
-route.get("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const tweet = await prisma.tweet.findUnique({ where: { id: Number(id) } });
-    if (!tweet) {
-      return res.status(404).json({ error: "Tweet not found" });
-    }
-
-    res.json(tweet);
-  } catch (error) {
-    res.status(400).json({ error: "Somthing went wrong" });
-  }
-});
-
-// !Update
-
-route.put("/:id", (req, res) => {
+// get one Tweet
+router.get('/:id', async (req, res) => {
   const { id } = req.params;
-  res.sendStatus(501).json({ error: `Not Implemented: ${id}` });
-});
+  console.log('Query tweet with id: ', id);
 
-// !Delete
-
-route.delete("/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    await prisma.tweet.delete({ where: { id: Number(id) } });
-    res.sendStatus(202).json({ message: "Tweet Deleted" });
-  } catch (error) {
-    res.sendStatus(400).json({ error: `Failed to Delete Tweet` });
+  const tweet = await prisma.tweet.findUnique({
+    where: { id: Number(id) },
+    include: { user: true },
+  });
+  if (!tweet) {
+    return res.status(404).json({ error: 'Tweet not found!' });
   }
+
+  res.json(tweet);
 });
 
-export default route;
+// update Tweet
+router.put('/:id', (req, res) => {
+  const { id } = req.params;
+  res.status(501).json({ error: `Not Implemented: ${id}` });
+});
+
+// delete Tweet
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+  await prisma.tweet.delete({ where: { id: Number(id) } });
+  res.sendStatus(200);
+});
+
+export default router;

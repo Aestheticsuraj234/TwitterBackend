@@ -1,20 +1,19 @@
-import express from "express";
-import userRoutes from './routes/userRoutes'
-import tweetRoutes from './routes/tweetRoutes'
+import express from 'express';
+import userRoutes from './routes/userRoutes';
+import tweetRoutes from './routes/tweetRoutes';
+import authRoutes from './routes/authRoutes';
+import { authenticateToken } from './middelware/authMiddleware';
 
-// Constants
-const port = 3000;
 const app = express();
-
 app.use(express.json());
-app.use('/user',userRoutes);
-app.use('/tweet',tweetRoutes);
-app.get("/", (req, res) => {
-  res.send("Hello World!");
+app.use('/user', authenticateToken, userRoutes);
+app.use('/tweet', authenticateToken, tweetRoutes);
+app.use('/auth', authRoutes);
+
+app.get('/', (req, res) => {
+  res.send('Hello world');
 });
 
-
-
-app.listen(port, () => {
-  console.log(`Server is start listening on Port: ${port}`);
+app.listen(3000, () => {
+  console.log('Server ready at localhost:3000');
 });
